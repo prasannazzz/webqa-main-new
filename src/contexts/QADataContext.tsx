@@ -8,6 +8,7 @@ export interface PartNumber {
   issues: string[];
   lastModified: string;
   reportDate: string;
+  sheetName?: string;
 }
 
 export interface QAReport {
@@ -23,6 +24,7 @@ interface QADataContextType {
   addReport: (report: QAReport) => void;
   updatePartNumber: (id: string, updates: Partial<PartNumber>) => void;
   removePartNumber: (id: string) => void;
+  loadSampleData: () => void;
   getStats: () => {
     totalParts: number;
     missingExtensions: number;
@@ -33,6 +35,7 @@ interface QADataContextType {
   getChartData: () => {
     issueDistribution: Array<{ name: string; count: number }>;
     resolutionTrends: Array<{ month: string; newIssues: number; resolved: number }>;
+    sheetDistribution: Array<{ sheetName: string; totalRows: number; issueRows: number }>;
   };
 }
 
@@ -131,6 +134,52 @@ export const QADataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setPartNumbers(prev => prev.filter(pn => pn.id !== id));
   };
 
+  const loadSampleData = () => {
+    const sampleSheets = ['Sheet1', 'Sheet2', 'Sheet3', 'Sheet4', 'Sheet5'];
+    const samplePartNumbers: PartNumber[] = [];
+    
+    sampleSheets.forEach((sheetName, sheetIndex) => {
+      // Generate different numbers of rows for each sheet
+      const rowCount = 10 + (sheetIndex * 5); // 10, 15, 20, 25, 30 rows
+      
+      for (let i = 0; i < rowCount; i++) {
+        const partNumber = `PN${String(sheetIndex + 1).padStart(2, '0')}${String(i + 1).padStart(3, '0')}`;
+        // Use deterministic patterns instead of random
+        const hasExtension = (i % 3) !== 0; // 2/3 have extensions
+        const finalPartNumber = hasExtension ? `${partNumber}.sldprt` : partNumber;
+        
+        const issues: string[] = [];
+        if (!hasExtension) issues.push('Missing Extension');
+        if ((i + sheetIndex) % 7 === 0) issues.push('Surface Body'); // Every 7th item
+        if ((i + sheetIndex) % 11 === 0) issues.push('Invalid Format'); // Every 11th item
+        if ((i + sheetIndex) % 13 === 0) issues.push('Non-10-Digit'); // Every 13th item
+        if ((i + sheetIndex) % 17 === 0) issues.push('Incorrect Naming'); // Every 17th item
+        
+        const status = issues.length > 0 ? 'pending' : 'corrected';
+        
+        samplePartNumbers.push({
+          id: `sample-${sheetIndex}-${i}`,
+          partNumber: finalPartNumber,
+          status: status as 'pending' | 'corrected' | 'invalid',
+          issues,
+          lastModified: new Date().toISOString(),
+          reportDate: new Date().toISOString(),
+          sheetName
+        });
+      }
+    });
+    
+    const sampleReport: QAReport = {
+      id: `sample-report-${Date.now()}`,
+      filename: 'Sample_5_Sheets.xlsx',
+      uploadDate: new Date().toISOString(),
+      partNumbers: samplePartNumbers
+    };
+    
+    setReports([sampleReport]);
+    setPartNumbers(samplePartNumbers);
+  };
+
   const getStats = () => {
     const totalParts = partNumbers.length;
     const missingExtensions = partNumbers.filter(pn => 
@@ -160,8 +209,12 @@ export const QADataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       { name: 'Missing Extension', count: partNumbers.filter(pn => pn.issues.includes('Missing Extension')).length },
       { name: 'Surface Body', count: partNumbers.filter(pn => pn.issues.includes('Surface Body')).length },
       { name: 'Invalid Format', count: partNumbers.filter(pn => pn.issues.includes('Invalid Format')).length },
-      { name: 'Non-10-Digit', count: partNumbers.filter(pn => pn.issues.includes('Non-10-Digit')).length }
+      { name: 'Non-10-Digit', count: partNumbers.filter(pn => pn.issues.includes('Non-10-Digit')).length },
+      { name: 'Incorrect Naming', count: partNumbers.filter(pn => pn.issues.includes('Incorrect Naming')).length }
     ];
+
+    // Debug log to verify all 5 issue types are present
+    console.log('Issue Distribution Data:', issueDistribution);
 
     // Group by month for trends
     const monthlyData = new Map<string, { newIssues: number; resolved: number }>();
@@ -189,9 +242,31 @@ export const QADataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       ...data
     }));
 
+    // Calculate sheet distribution
+    const sheetData = new Map<string, { totalRows: number; issueRows: number }>();
+    
+    partNumbers.forEach(pn => {
+      const sheetName = pn.sheetName || 'Unknown Sheet';
+      if (!sheetData.has(sheetName)) {
+        sheetData.set(sheetName, { totalRows: 0, issueRows: 0 });
+      }
+      
+      const data = sheetData.get(sheetName)!;
+      data.totalRows++;
+      if (pn.issues.length > 0) {
+        data.issueRows++;
+      }
+    });
+
+    const sheetDistribution = Array.from(sheetData.entries()).map(([sheetName, data]) => ({
+      sheetName,
+      ...data
+    }));
+
     return {
       issueDistribution,
-      resolutionTrends
+      resolutionTrends,
+      sheetDistribution
     };
   };
 
@@ -202,6 +277,7 @@ export const QADataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       addReport,
       updatePartNumber,
       removePartNumber,
+      loadSampleData,
       getStats,
       getChartData
     }}>
