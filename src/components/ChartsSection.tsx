@@ -4,7 +4,7 @@ import { useQAData } from "../contexts/QADataContext";
 
 const ChartsSection = () => {
   const { getChartData } = useQAData();
-  const { issueDistribution, resolutionTrends } = getChartData();
+  const { issueDistribution, resolutionTrends, sheetDistribution } = getChartData();
 
   // Convert issue distribution to include percentages for pie chart
   const totalIssues = issueDistribution.reduce((sum, item) => sum + item.count, 0);
@@ -105,6 +105,28 @@ const ChartsSection = () => {
                 strokeWidth={2}
               />
             </LineChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      {/* Sheet Distribution Chart */}
+      <Card className="shadow-sm lg:col-span-2">
+        <CardHeader>
+          <CardTitle>Sheet Distribution</CardTitle>
+          <CardDescription>
+            Row count analysis by Excel sheet - Total rows vs rows with issues
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={sheetDistribution}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="sheetName" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="totalRows" fill="hsl(var(--chart-info))" name="Total Rows" />
+              <Bar dataKey="issueRows" fill="hsl(var(--chart-warning))" name="Rows with Issues" />
+            </BarChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
