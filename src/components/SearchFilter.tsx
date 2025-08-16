@@ -65,13 +65,13 @@ const SearchFilter = () => {
           <div className="flex-1">
             <Input 
               placeholder="Search part numbers..." 
-              className="w-full"
+              className="w-full text-white placeholder:text-white"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-48">
+            <SelectTrigger className="w-full sm:w-48 text-white">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>
@@ -81,7 +81,7 @@ const SearchFilter = () => {
               <SelectItem value="invalid">Invalid</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline">
+          <Button className="bg-primary text-white hover:bg-primary/90 border-0">
             <Download className="h-4 w-4 mr-2" />
             Export ({filteredPartNumbers.length})
           </Button>
@@ -111,7 +111,7 @@ const SearchFilter = () => {
                   <td className="p-3">
                     <div className="flex flex-wrap gap-1">
                       {part.issues.map((issue, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
+                        <Badge key={index} className="bg-black text-white border-0 text-xs">
                           {issue}
                         </Badge>
                       ))}
@@ -127,18 +127,18 @@ const SearchFilter = () => {
                     <div className="flex space-x-2">
                       {part.status === 'pending' && (
                         <Button 
-                          variant="outline" 
                           size="sm"
                           onClick={() => handleMarkCorrected(part.id)}
+                          className="bg-chart-secondary text-white hover:bg-chart-secondary/80 border-0"
                         >
                           <Edit className="h-4 w-4 mr-2" />
                           Mark Corrected
                         </Button>
                       )}
                       <Button 
-                        variant="outline" 
                         size="sm"
                         onClick={() => handleRemovePart(part.id)}
+                        className="bg-chart-warning text-white hover:bg-chart-warning/80 border-0"
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
                         Remove

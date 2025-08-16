@@ -1,4 +1,4 @@
-import { Upload, FileSpreadsheet } from "lucide-react";
+import { FileSpreadsheet, FolderOpen } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -77,7 +77,7 @@ const FileUpload = () => {
       </CardHeader>
       <CardContent>
         <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-chart-primary transition-colors">
-          <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <img src="/copco.jpg" alt="Atlas Copco" className="h-12 w-12 mx-auto mb-4 object-contain" />
           <p className="text-muted-foreground mb-4">
             Drag and drop your Excel file here, or click to browse
           </p>
@@ -88,7 +88,7 @@ const FileUpload = () => {
             className="hidden"
             id="file-upload"
           />
-          <Button asChild variant="outline" className="cursor-pointer" disabled={isProcessing}>
+          <Button asChild className="cursor-pointer bg-primary text-white hover:bg-primary/90 border-0" disabled={isProcessing}>
             <label htmlFor="file-upload">
               {isProcessing ? "Processing..." : "Choose File"}
             </label>
