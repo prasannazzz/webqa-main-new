@@ -25,6 +25,7 @@ interface QADataContextType {
   updatePartNumber: (id: string, updates: Partial<PartNumber>) => void;
   removePartNumber: (id: string) => void;
   loadSampleData: () => void;
+  clearAllData: () => void;
   getStats: () => {
     totalParts: number;
     missingExtensions: number;
@@ -141,6 +142,7 @@ export const QADataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     sampleSheets.forEach((sheetName, sheetIndex) => {
       // Generate different numbers of rows for each sheet
       const rowCount = 10 + (sheetIndex * 5); // 10, 15, 20, 25, 30 rows
+      console.log(`Generating ${rowCount} rows for ${sheetName} (index ${sheetIndex})`);
       
       for (let i = 0; i < rowCount; i++) {
         const partNumber = `PN${String(sheetIndex + 1).padStart(2, '0')}${String(i + 1).padStart(3, '0')}`;
@@ -169,6 +171,8 @@ export const QADataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
     });
     
+    console.log(`Total sample parts generated: ${samplePartNumbers.length}`);
+    
     const sampleReport: QAReport = {
       id: `sample-report-${Date.now()}`,
       filename: 'Sample_5_Sheets.xlsx',
@@ -178,6 +182,11 @@ export const QADataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     
     setReports([sampleReport]);
     setPartNumbers(samplePartNumbers);
+  };
+
+  const clearAllData = () => {
+    setReports([]);
+    setPartNumbers([]);
   };
 
   const getStats = () => {
@@ -205,6 +214,7 @@ export const QADataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const getChartData = () => {
+    // Always show all issue types, even when count is 0
     const issueDistribution = [
       { name: 'Missing Extension', count: partNumbers.filter(pn => pn.issues.includes('Missing Extension')).length },
       { name: 'Surface Body', count: partNumbers.filter(pn => pn.issues.includes('Surface Body')).length },
@@ -213,29 +223,35 @@ export const QADataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       { name: 'Incorrect Naming', count: partNumbers.filter(pn => pn.issues.includes('Incorrect Naming')).length }
     ];
 
-    // Debug log to verify all 5 issue types are present
-    console.log('Issue Distribution Data:', issueDistribution);
-
     // Group by month for trends
     const monthlyData = new Map<string, { newIssues: number; resolved: number }>();
     
-    partNumbers.forEach(pn => {
-      const month = new Date(pn.lastModified).toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short' 
-      });
-      
-      if (!monthlyData.has(month)) {
+    if (partNumbers.length === 0) {
+      // Show default months with 0 values when no data is loaded
+      const defaultMonths = ['Jan 2025', 'Feb 2025', 'Mar 2025', 'Apr 2025', 'May 2025'];
+      defaultMonths.forEach(month => {
         monthlyData.set(month, { newIssues: 0, resolved: 0 });
-      }
-      
-      const data = monthlyData.get(month)!;
-      if (pn.status === 'corrected') {
-        data.resolved++;
-      } else if (pn.status === 'pending') {
-        data.newIssues++;
-      }
-    });
+      });
+    } else {
+      // Process actual data
+      partNumbers.forEach(pn => {
+        const month = new Date(pn.lastModified).toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'short' 
+        });
+        
+        if (!monthlyData.has(month)) {
+          monthlyData.set(month, { newIssues: 0, resolved: 0 });
+        }
+        
+        const data = monthlyData.get(month)!;
+        if (pn.status === 'corrected') {
+          data.resolved++;
+        } else if (pn.status === 'pending') {
+          data.newIssues++;
+        }
+      });
+    }
 
     const resolutionTrends = Array.from(monthlyData.entries()).map(([month, data]) => ({
       month,
@@ -245,18 +261,27 @@ export const QADataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     // Calculate sheet distribution
     const sheetData = new Map<string, { totalRows: number; issueRows: number }>();
     
-    partNumbers.forEach(pn => {
-      const sheetName = pn.sheetName || 'Unknown Sheet';
-      if (!sheetData.has(sheetName)) {
+    // If no data is loaded, show default empty sheets
+    if (partNumbers.length === 0) {
+      const defaultSheets = ['Sheet1', 'Sheet2', 'Sheet3', 'Sheet4', 'Sheet5'];
+      defaultSheets.forEach(sheetName => {
         sheetData.set(sheetName, { totalRows: 0, issueRows: 0 });
-      }
-      
-      const data = sheetData.get(sheetName)!;
-      data.totalRows++;
-      if (pn.issues.length > 0) {
-        data.issueRows++;
-      }
-    });
+      });
+    } else {
+      // Process actual data
+      partNumbers.forEach(pn => {
+        const sheetName = pn.sheetName || 'Unknown Sheet';
+        if (!sheetData.has(sheetName)) {
+          sheetData.set(sheetName, { totalRows: 0, issueRows: 0 });
+        }
+        
+        const data = sheetData.get(sheetName)!;
+        data.totalRows++;
+        if (pn.issues.length > 0) {
+          data.issueRows++;
+        }
+      });
+    }
 
     const sheetDistribution = Array.from(sheetData.entries()).map(([sheetName, data]) => ({
       sheetName,
@@ -278,6 +303,7 @@ export const QADataProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       updatePartNumber,
       removePartNumber,
       loadSampleData,
+      clearAllData,
       getStats,
       getChartData
     }}>

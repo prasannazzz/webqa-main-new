@@ -1,9 +1,9 @@
-import { Upload, Database } from "lucide-react";
+import { Upload, Database, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQAData } from "../contexts/QADataContext";
 
 const Header = () => {
-  const { loadSampleData } = useQAData();
+  const { loadSampleData, clearAllData } = useQAData();
 
   return (
     <header className="bg-card border-b border-border shadow-sm">
@@ -31,6 +31,15 @@ const Header = () => {
             >
               <Database className="h-4 w-4" />
               Load Sample Data
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={clearAllData}
+              className="flex items-center gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              Clear Data
             </Button>
             <div className="text-sm text-muted-foreground">
               Track • Analyze • Improve
